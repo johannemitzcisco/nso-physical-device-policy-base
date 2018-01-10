@@ -1,0 +1,102 @@
+module physical-device-policy-base {
+
+  namespace "http://example.com/physical-device-policy-base";
+  prefix physical-device-policy-base;
+
+  import topology-policy-base {
+    prefix tpb;
+  }
+  import network-policy-base {
+    prefix npb;
+  }
+  import ietf-inet-types {
+    prefix inet;
+  }
+  import tailf-common {
+    prefix tailf;
+  }
+  import tailf-ncs {
+    prefix ncs;
+  }
+
+  description
+    "This is an add on model to the network-policy-base package/service";
+
+  revision 2017-11-28 {
+    description
+      "Initial revision.";
+  }
+
+  // Augment this type to add additional physical interface types
+//  typedef physical-interface-type {
+//    type enumeration {
+//      enum "GigabitEthernet";
+//     enum "TenGigabitEthernet";
+//    }
+//  }
+
+  typedef device-role {
+    type enumeration {
+      enum "customer-endpoint-router";
+      enum "provider-core-router";
+      enum "provider-endpoint-router";
+    }
+  }
+
+  grouping device-general-policy-grouping {
+    list model {
+      max-elements 1;
+      key "policy-name";
+      leaf policy-name {
+        type leafref {
+          path "/npb:network/npb:policy-definitions/tpb:endpoint/model/name";
+        }
+      }
+    }
+    list role {
+      when "../model";
+      max-elements 1;
+      key "policy-name";
+      leaf policy-name {
+        type leafref {
+          path "deref(../../model/policy-name)/../roles";
+        }
+      }
+    }
+
+  }
+
+  augment /npb:network/npb:network-service/tpb:topology/tpb:endpoint/tpb:policies {
+//      leaf uid {
+//        type string;
+//      }
+    uses device-general-policy-grouping;
+  }
+
+  augment /npb:network/npb:policy-definitions/tpb:endpoint {
+    list model {
+      key name;
+      leaf name {
+        type string;
+      }
+      leaf template {
+        type string;
+      }
+      leaf-list roles {
+        type leafref {
+          path "../../role/name";
+        }
+      }
+    }
+    list role {
+      key name;
+      leaf name {
+        type device-role;
+      }
+      leaf template {
+        type string;
+      }
+    }
+  }
+
+}
